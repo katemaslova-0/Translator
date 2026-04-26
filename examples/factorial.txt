@@ -1,0 +1,1 @@
+(;(a(=(0)))(;(in(a))(;(res(=(factorial(a))))(;(out(res))(;(func(factorial(b)(;(if(==(b)(1))(;(return(1))(else(;(c(=(factorial(-(b)(1)))))(;(c(=(*(c)(b))))(;(return(c))))))))))))))))
