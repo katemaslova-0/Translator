@@ -1,0 +1,178 @@
+; expected: address of memory cell to put result to in rsi
+; out:      number in rax
+; destroys: rax, rdi, rdx, rcx, rsi
+
+MyIn:
+            push rbx
+            mov rax, 0
+            mov rsi, rdi
+            mov rdi, 0
+            mov rdx, 8d
+            syscall
+
+            mov rcx, rax
+            dec rcx
+            xor rax, rax
+
+            movzx rbx, byte [rsi]
+            cmp rbx, '-'
+            jne convert
+            mov byte [flag], 1d
+            inc rsi
+            dec rcx
+
+            convert:
+                movzx rbx, byte [rsi]
+                sub bl, '0'
+                imul rax, rax, 10
+                add rax, rbx
+                inc rsi
+            loop convert
+
+            movzx rbx, byte [flag]
+            test rbx, rbx
+            jz end
+            neg rax
+
+            end:
+            mov [rsi], rax
+            pop rbx
+            ret
+
+
+; expected: address of memory cell to put result to in rsi
+; out:      number read in that memory cell
+; destroys: rax, rdi, rdx, rcx, rsi
+
+MyPrintf:
+            mov rdx, rdi
+            xor r14, r14
+
+            test edx, edx                   ; check the sign
+            js .NegativeNum
+            jmp .RegToDec
+
+        .NegativeNum:
+            neg edx                         ; convert to positive equivalent
+            mov byte [SymBuff], 45d         ; print '-' before the num
+            push rsi
+            push rcx
+            push rdx
+            lea rsi, [SymBuff]              ; put the address to rdi
+            mov rax, 1                      ; номер системного вызова sys_write
+            mov rdi, 1                      ; дескриптор файла 1 (stdout)
+            mov rdx, 1d                     ; количество байт для вывода
+            syscall                         ; вызов ядра
+            pop rdx
+            pop rcx
+            pop rsi
+
+        .RegToDec:
+            mov rcx, 10d                    ; max value of decimal places
+            mov r12, 10d                    ; as a const value for division
+            mov rsi, 1000000000d            ; as a const value for division
+
+        .PrintDecNum:
+            mov rax, rdx
+            xor rdx, rdx
+            div rsi                         ; result in rax, remainder in rdx
+
+            cmp rax, 0                      ; check if bit is null
+            je .NullBit
+            mov r14, 1d
+
+         .NullBit:
+            cmp r14, 0                      ; if there wasn't any non-zero bits before -> skip printing
+            je .SkipNumPrint
+
+            add rax, '0'                    ; convert result to ascii
+            mov [SymBuff], al               ; store it to the buffer
+
+            push rsi
+            push rcx
+            push rdx
+            lea rsi, [SymBuff]                ; put the address to rdi
+            mov rax, 1                      ; номер системного вызова sys_write
+            mov rdi, 1                      ; дескриптор файла 1 (stdout)
+            mov rdx, 1d                     ; количество байт для вывода
+            syscall                         ; вызов ядра
+            pop rdx
+            pop rcx
+            pop rsi
+
+        .SkipNumPrint:
+            push rdx                        ; save rdx
+            mov rax, rsi
+            xor rdx, rdx
+            div r12                         ; result in rax, remainder in rdx; division by 10d
+            mov rsi, rax                    ; move result to rsi
+            pop rdx
+
+        loop .PrintDecNum
+
+            cmp r14, 0
+            jne FinishDecPrinting
+
+            mov rax, '0'
+            mov [SymBuff], al               ; store it to the buffer
+
+            push rsi
+            push rcx
+            push rdx
+            lea rsi, [SymBuff]              ; put the address to rdi
+            mov rax, 1                      ; номер системного вызова sys_write
+            mov rdi, 1                      ; дескриптор файла 1 (stdout)
+            mov rdx, 1d                     ; количество байт для вывода
+            syscall                         ; вызов ядра
+            pop rdx
+            pop rcx
+            pop rsi
+
+        FinishDecPrinting:
+
+            mov rax, ' '
+            mov [SymBuff], al               ; store it to the buffer
+
+            push rsi
+            push rcx
+            push rdx
+            lea rsi, [SymBuff]              ; put the address to rdi
+            mov rax, 1                      ; номер системного вызова sys_write
+            mov rdi, 1                      ; дескриптор файла 1 (stdout)
+            mov rdx, 1d                     ; количество байт для вывода
+            syscall                         ; вызов ядра
+            pop rdx
+            pop rcx
+            pop rsi
+
+            ret
+
+
+Draw:
+            push rax
+            mov rcx, 10d
+
+            DrawLine:
+                push rcx
+
+                mov rax, 1
+                mov rdi, 1
+                lea rsi, [VIDEOMEMORY]
+                imul rcx, rcx, 10d
+                add rsi, 100d
+                sub rsi, rcx
+                mov rdx, 10d
+                syscall
+
+                mov rax, 1
+                mov rdi, 1
+                lea rsi, [newline]
+                mov rdx, 1
+                syscall
+
+                pop rcx
+            loop DrawLine
+
+            pop rax
+            ret
+
