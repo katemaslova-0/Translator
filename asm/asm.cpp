@@ -61,7 +61,8 @@ HashElem_t hash_source[] = {{0, "mov", TranslateMov},
                             {0, "jge", TranslateJmp},
                             {0, "cvt", TranslateCvt},
                             {0, "sqr", TranslateSqr},
-                            {0, "ret", TranslateRet}};
+                            {0, "ret", TranslateRet},
+                            {0, "imu", TranslateImul}};
 
 int num_of_hashsource_elems = sizeof(hash_source) / sizeof(HashElem_t);
 
@@ -465,15 +466,63 @@ int AddVarsOffsets (Asm_t * asm_struct)
             if (strcmp(name, asm_struct->names[name_count].name) == 0)
             {
                 asm_struct->names[name_count].offset = asm_struct->byte_counter;
-                asm_struct->bytes[asm_struct->byte_counter] = 0x00; // пока только 0
-                asm_struct->bytes[asm_struct->byte_counter + 1] = 0x00;
-                asm_struct->bytes[asm_struct->byte_counter + 2] = 0x00;
-                asm_struct->bytes[asm_struct->byte_counter + 3] = 0x00;
-                asm_struct->bytes[asm_struct->byte_counter + 4] = 0x00;
-                asm_struct->bytes[asm_struct->byte_counter + 5] = 0x00;
-                asm_struct->bytes[asm_struct->byte_counter + 6] = 0x00;
-                asm_struct->bytes[asm_struct->byte_counter + 7] = 0x00;
-                asm_struct->byte_counter += 8;
+                char * curr_line = *ptr;
+                int times = 1;
+
+                while (*curr_line != ':')
+                    curr_line++;
+                curr_line += 2;
+
+                if (strncmp("times", curr_line, 5) == 0)
+                    sscanf(curr_line + 6, "%d", &times);
+
+                printf("times: %d\n", times);
+
+                while (*curr_line != 'd')
+                    curr_line++;
+                curr_line++;
+
+                int value = 0;
+                sscanf(curr_line + 2, "%d", &value);
+
+                for (int i = 0; i < times; i++)
+                {
+                    switch(*curr_line)
+                    {
+                    case 'q':
+                    {
+                        asm_struct->bytes[asm_struct->byte_counter] = (unsigned char) value & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 1] = (unsigned char)  (value >> 8) & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 2] = (unsigned char) (value >> 16) & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 3] = (unsigned char) (value >> 24) & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 4] = 0x00;
+                        asm_struct->bytes[asm_struct->byte_counter + 5] = 0x00;
+                        asm_struct->bytes[asm_struct->byte_counter + 6] = 0x00;
+                        asm_struct->bytes[asm_struct->byte_counter + 7] = 0x00;
+                        asm_struct->byte_counter += 8;
+                    }; break;
+                    case 'd':
+                    {
+                        asm_struct->bytes[asm_struct->byte_counter] = (unsigned char) value & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 1] = (unsigned char) (value >> 8) & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 2] = (unsigned char) (value >> 16) & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 3] = (unsigned char) (value >> 24) & 0xFF;
+                        asm_struct->byte_counter += 4;
+                    } break;
+                    case 'w':
+                    {
+                        asm_struct->bytes[asm_struct->byte_counter] = (unsigned char) value & 0xFF;
+                        asm_struct->bytes[asm_struct->byte_counter + 1] = (unsigned char) (value >> 8) & 0xFF;
+                        asm_struct->byte_counter += 2;
+                    } break;
+                    case 'b':
+                    {
+                        asm_struct->bytes[asm_struct->byte_counter] = (unsigned char) value & 0xFF;
+                        asm_struct->byte_counter++;
+                    } break;
+                    default: printf("Error while parsing data\n");
+                    }
+                }
                 break;
             }
         }
@@ -528,7 +577,7 @@ int AddLabelOffset (Asm_t * asm_struct, char * ptr)
     {
         if (asm_struct->labels[count].number == *ptr)
         {
-            asm_struct->labels[count].offset = asm_struct->byte_counter;
+            asm_struct->labels[count].offset = asm_struct->byte_counter - 4;
             return 0;
         }
     }
@@ -760,8 +809,12 @@ int TranslateJmp (Asm_t * asm_struct, char * ptr)
             case JLE: asm_struct->bytes[count + 1] = 0x8E; break;
             case JG:  asm_struct->bytes[count + 1] = 0x8F; break;
             case JGE: asm_struct->bytes[count + 1] = 0x8D; break;
+            case JZ:
             case JE:  asm_struct->bytes[count + 1] = 0x84; break;
+            case JNZ:
             case JNE: asm_struct->bytes[count + 1] = 0x85; break;
+            case JS:  asm_struct->bytes[count + 1] = 0x88; break;
+            case JNS: asm_struct->bytes[count + 1] = 0x89; break;
             case JMP:
             case DEFAULT_JMP:
             default: {printf("Error in TranslateJmp\n"); return -1;}
@@ -1266,10 +1319,28 @@ int TranslateMov (Asm_t * asm_struct, char * ptr)
         return TranslateMovMemRegNoDispToReg(asm_struct, ptr);
     else if (*ptr == 'r' && *(ptr + 5) == '[')
         return TranslateMovMemLabelToReg(asm_struct, ptr);
+    else if (*ptr == 'b')
+        return TranslateMovByte(asm_struct); // FIXME
     else
         printf("Error while translating mov. String: %s\n", ptr);
 
     return -1;
+}
+
+int TranslateMovByte (Asm_t * asm_struct)
+{
+    assert(asm_struct);
+
+    int count = asm_struct->byte_counter;
+
+    asm_struct->bytes[count]     = 0xC6;
+    asm_struct->bytes[count + 1] = 0x04;
+    asm_struct->bytes[count + 2] = 0x08;
+    asm_struct->bytes[count + 3] = 0x6F;
+
+    asm_struct->byte_counter += 4;
+
+    return 0;
 }
 
 
@@ -1559,6 +1630,35 @@ int TranslateMovRegToReg (Asm_t * asm_struct, char * ptr)
     asm_struct->bytes[count + 2] = mod_rm;
 
     asm_struct->byte_counter += 3;
+
+    return 0;
+}
+
+
+int TranslateImul (Asm_t * asm_struct, char * ptr) // только для imul reg1, reg2, 10!!
+{
+    assert(asm_struct);
+    assert(ptr);
+
+    int count = asm_struct->byte_counter;
+    asm_struct->bytes[count] = 0x48;
+    asm_struct->bytes[count + 1] = 0x6B;
+
+    ptr += 5;
+
+    unsigned char mod = 0;
+    mod |= (1 << 6);
+    mod |= (1 << 7);
+
+    Op_t dst = ParseRegName(ptr);
+    Op_t src = ParseRegName(ptr + 5);
+
+    unsigned char mod_rm = MakeModeRm(mod, src, dst, DstFirst);
+
+    asm_struct->bytes[count + 2] = mod_rm;
+    asm_struct->bytes[count + 3] = 0x0A;
+
+    asm_struct->byte_counter += 4;
 
     return 0;
 }

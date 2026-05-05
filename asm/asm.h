@@ -58,6 +58,10 @@ enum Jmp_t
     JGE,
     JE,
     JNE,
+    JS,
+    JNS,
+    JZ,
+    JNZ,
     DEFAULT_JMP
 };
 
@@ -153,6 +157,9 @@ int TranslateMovRegToMemLabel (Asm_t * asm_struct, char * ptr);
 int TranlateMovRegToMemRegNoDisp (Asm_t * asm_struct, char * ptr);
 int TranslateMovNumToReg (Asm_t * asm_struct, char * ptr);
 int TranslateMovRegToReg (Asm_t * asm_struct, char * ptr);
+
+int TranslateImul (Asm_t * asm_struct, char * ptr); // FIXME
+int TranslateMovByte (Asm_t * asm_struct);
 
 int AddNamePointer (Asm_t * asm_struct, char * ptr, int var_offset);
 void AddLabelPointer (Asm_t * asm_struct, char * ptr, int label_offset);
