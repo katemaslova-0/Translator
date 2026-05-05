@@ -1,65 +1,82 @@
 #include <stdio.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include "asm.h"
 
-int main (void)
+int main (int argc, char * argv[])
 {
-    //const char * input_file = "ASM.s";
-//
-    //if (argc == 2)
-    //    input_file = argv[1];
-    //else if (argc > 2)
-    //{
-    //    printf("Invalid cmd line arguments\n");
-    //    return -1;
-    //}
+    const char * input_file = "ASM.s";
 
-    //FILE * fp_in  = fopen(input_file, "r");
+    if (argc == 2)
+        input_file = argv[1];
+    else if (argc > 2)
+    {
+        printf("Invalid cmd line arguments\n");
+        return -1;
+    }
+
+    Asm_t asm_struct = InitAsmStruct();
+    int res = 0;
+
+    if ((res = FillHashtable()) != 0)
+        return -1;
+
+    if ((res = CopyAsmFileToBuffer(&asm_struct, input_file)) != 0)
+    {
+        printf("Error while copying file\n");
+        return -1;
+    }
+
+    if ((res = FillPointerBuff(&asm_struct)) != 0)
+    {
+        printf("Error while filling pointer buff\n");
+        return -1;
+    }
+
+    if ((res = FillNametable(&asm_struct)) != 0)
+    {
+        printf("Error while filling nametable\n");
+        return -1;
+    }
+
+    if ((res = CheckCollisions(&asm_struct)) != 0)
+    {
+        printf("Collision error\n");
+        return -1;
+    }
+
+    if ((res = FirstCompilation(&asm_struct)) != 0)
+    {
+        printf("Error while first compilation\n");
+        return -1;
+    }
+
+    // первый проход: трансляция команд, заполнение буферов меток, функций и переменных, адреса пустые
+
+    if ((res = SecondCompilation(&asm_struct)) != 0)
+        printf("Error while second compilation\n");
+
+    // второй проход: заполнение адресов
+
+    // пока без подключения стандартных функций
+
+    // Сборка исполняемого файла (ниже)
+
     FILE * fp_out = fopen("asm_output", "w+b");
-    //assert(fp_in);
     assert(fp_out);
 
-    unsigned char elf_header[] =     {0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01, 0x01, 0x00,
-                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                      0x02, 0x00, 0x3E, 0x00, 0x01, 0x00, 0x00, 0x00,
-                                      0xB0, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                      0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                      0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x38, 0x00,
-                                      0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    int code_size = asm_struct.start_of_data_segment;
+    int data_size = asm_struct.byte_counter - code_size;
 
-    // изменено в ELF: байт на 0040 (0x01 -> 0x02, 2 заголовка)
+    SetCodeSize(code_size);
+    SetDataSizeAndOffset(data_size, code_size);
 
-    unsigned char program_header_text[] = {0x01, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
-                                           0xB0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0xB0, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0xB0, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    FwriteAll(fp_out, &asm_struct);
 
-    unsigned char program_header_data[] = {0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00,
-                                           0xC9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0xC9, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0xC9, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                           0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-    unsigned char text[]                = {0xb8, 0x3C, 0x00, 0x00, 0x00, 0x31, 0xFF, 0x0F,
-                                           0x05};
-    unsigned char data[]                = {};
-
-    fwrite(&elf_header,          1, sizeof(elf_header),          fp_out);
-    fwrite(&program_header_text, 1, sizeof(program_header_text), fp_out);
-    fwrite(&program_header_data, 1, sizeof(program_header_data), fp_out);
-    fwrite(&text,                1, sizeof(text),                fp_out);
-    fwrite(&data,                1, sizeof(data),                fp_out);
-
-    //fclose(fp_in);
     fclose(fp_out);
-
     chmod("asm_output", 0755);
+
+    DestroyAll(&asm_struct);
 
     return 0;
 }
