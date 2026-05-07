@@ -45,6 +45,7 @@ MyIn:
 ; destroys: rax, rdi, rdx, rcx, rsi
 
 MyPrintf:
+            push rbp
             mov rdx, rdi
             xor r14, r14
 
@@ -54,14 +55,15 @@ MyPrintf:
 
         .NegativeNum:
             neg edx                         ; convert to positive equivalent
-            mov byte [SymBuff], 45d         ; print '-' before the num
+            push byte 45d
+            mov rbp, rsp
             push rsi
             push rcx
             push rdx
-            lea rsi, [SymBuff]              ; put the address to rdi
+            lea rsi, [rbp]                  ; put the address to rdi
             mov rax, 1                      ; номер системного вызова sys_write
             mov rdi, 1                      ; дескриптор файла 1 (stdout)
-            mov rdx, 1d                     ; количество байт для вывода
+            mov rdx, 1                      ; количество байт для вывода
             syscall                         ; вызов ядра
             pop rdx
             pop rcx
@@ -86,12 +88,12 @@ MyPrintf:
             je .SkipNumPrint
 
             add rax, '0'                    ; convert result to ascii
-            mov [SymBuff], al               ; store it to the buffer
+            mov [rbp], al                   ; store it to the buffer
 
             push rsi
             push rcx
             push rdx
-            lea rsi, [SymBuff]                ; put the address to rdi
+            lea rsi, [rbp]                  ; put the address to rdi
             mov rax, 1                      ; номер системного вызова sys_write
             mov rdi, 1                      ; дескриптор файла 1 (stdout)
             mov rdx, 1d                     ; количество байт для вывода
@@ -114,12 +116,12 @@ MyPrintf:
             jne FinishDecPrinting
 
             mov rax, '0'
-            mov [SymBuff], al               ; store it to the buffer
+            mov [rbp], al                   ; store it to the buffer
 
             push rsi
             push rcx
             push rdx
-            lea rsi, [SymBuff]              ; put the address to rdi
+            lea rsi, [rbp]                  ; put the address to rdi
             mov rax, 1                      ; номер системного вызова sys_write
             mov rdi, 1                      ; дескриптор файла 1 (stdout)
             mov rdx, 1d                     ; количество байт для вывода
@@ -131,12 +133,12 @@ MyPrintf:
         FinishDecPrinting:
 
             mov rax, ' '
-            mov [SymBuff], al               ; store it to the buffer
+            mov [rbp], al                   ; store it to the buffer
 
             push rsi
             push rcx
             push rdx
-            lea rsi, [SymBuff]              ; put the address to rdi
+            lea rsi, [rbp]                  ; put the address to rdi
             mov rax, 1                      ; номер системного вызова sys_write
             mov rdi, 1                      ; дескриптор файла 1 (stdout)
             mov rdx, 1d                     ; количество байт для вывода
@@ -144,6 +146,7 @@ MyPrintf:
             pop rdx
             pop rcx
             pop rsi
+            pop rbp
 
             ret
 
@@ -175,4 +178,3 @@ Draw:
 
             pop rax
             ret
-
