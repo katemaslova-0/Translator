@@ -78,14 +78,15 @@ MyPrintf:
             mov rdx, rdi
             xor r14, r14
 
+            push byte 45d
+            mov rbp, rsp
+
             test edx, edx                   ; check the sign
             js .NegativeNum
             jmp .RegToDec
 
         .NegativeNum:
             neg edx                         ; convert to positive equivalent
-            push byte 45d
-            mov rbp, rsp
             push rsi
             push rcx
             push rdx
@@ -175,6 +176,7 @@ MyPrintf:
             pop rdx
             pop rcx
             pop rsi
+            pop rbp
             pop rbp
 
             ret
