@@ -1,9 +1,41 @@
-; expected: address of memory cell to put result to in rsi
-; out:      number in rax
-; destroys: rax, rdi, rdx, rcx, rsi
+Draw:
+            push rax
+            mov rcx, 10d
+
+            DrawLine:
+                push rcx
+
+                mov rax, 1
+                mov rdi, 1
+                lea rsi, [VIDEOMEMORY]
+                imul rcx, rcx, 10d
+                add rsi, 100d
+                sub rsi, rcx
+                mov rdx, 10d
+                syscall
+
+                mov rax, 1
+                mov rdi, 1
+                push byte 10d
+                mov rbp, rsp
+                lea rsi, [rbp]
+                mov rdx, 1
+                syscall
+                pop rbp
+
+                pop rcx
+            loop DrawLine
+
+            pop rax
+            ret
+
 
 MyIn:
+            push rbp
             push rbx
+            push byte 0
+            mov rbp, rsp
+
             mov rax, 0
             mov rsi, rdi
             mov rdi, 0
@@ -17,7 +49,7 @@ MyIn:
             movzx rbx, byte [rsi]
             cmp rbx, '-'
             jne convert
-            mov byte [flag], 1d
+            mov byte [rbp], 1d
             inc rsi
             dec rcx
 
@@ -29,7 +61,7 @@ MyIn:
                 inc rsi
             loop convert
 
-            movzx rbx, byte [flag]
+            movzx rbx, byte [rbp]
             test rbx, rbx
             jz end
             neg rax
@@ -37,12 +69,9 @@ MyIn:
             end:
             mov [rsi], rax
             pop rbx
+            pop rbp
+            pop rbp
             ret
-
-
-; expected: address of memory cell to put result to in rsi
-; out:      number read in that memory cell
-; destroys: rax, rdi, rdx, rcx, rsi
 
 MyPrintf:
             push rbp
@@ -148,33 +177,4 @@ MyPrintf:
             pop rsi
             pop rbp
 
-            ret
-
-
-Draw:
-            push rax
-            mov rcx, 10d
-
-            DrawLine:
-                push rcx
-
-                mov rax, 1
-                mov rdi, 1
-                lea rsi, [VIDEOMEMORY]
-                imul rcx, rcx, 10d
-                add rsi, 100d
-                sub rsi, rcx
-                mov rdx, 10d
-                syscall
-
-                mov rax, 1
-                mov rdi, 1
-                lea rsi, [newline]
-                mov rdx, 1
-                syscall
-
-                pop rcx
-            loop DrawLine
-
-            pop rax
             ret
