@@ -1,5 +1,9 @@
 const int FUNC_NAME_LENGTH = 20;
 
+const int SIZE_OF_DRAW = 74;
+const int SIZE_OF_MY_IN = 95;
+const int SIZE_OF_MY_PRINTF = 219;
+
 enum FuncOrVarAsm_t
 {
     FUNC,
@@ -37,6 +41,9 @@ struct Asm_t
     int label_counter = 0;
     char ** lines;
     int start_of_data_segment = 0;
+    unsigned char * draw;
+    unsigned char * my_in;
+    unsigned char * my_printf;
 };
 
 enum MathOp_t
@@ -157,4 +164,4 @@ void AddMyInFuncBytes (Asm_t * asm_struct);
 void AddMyPrintfFuncBytes (Asm_t * asm_struct);
 
 
-void MakeStdFuncArrays (void);
+void MakeStdFuncArrays (Asm_t * asm_struct);

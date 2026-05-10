@@ -431,9 +431,9 @@ int TranslateFuncInit (Files file, Node * node, int * labels, Nametables table, 
 
     int res = 0;
 
-    // MOV_NUM_TO_REG(RAX, 60);
-    // XOR_REG_REG(RDI);
-    // SYSCALL;
+    MOV_NUM_TO_REG(RAX, 60);
+    XOR_REG_REG(RDI);
+    SYSCALL;
 
     fprintf(file.asm_func, "%s:\n\n", FUNC_NAME);
     if ((res = AddFunctionOffset(table.asm_struct, FUNC_NAME)) != 0) return -1;
@@ -461,7 +461,7 @@ int TranslateFuncInit (Files file, Node * node, int * labels, Nametables table, 
 }
 
 
-int TranslateOut (Files file, Nametables table, Node * node, bool * is_inside_func) // FIXME
+int TranslateOut (Files file, Nametables table, Node * node, bool * is_inside_func)
 {
     assert(node);
 
@@ -860,6 +860,10 @@ Asm_t InitAsmStruct (void)
 
     for (int count = 0; count < NUM_OF_LABELS; count++)
         asm_struct.labels[count].byte_pointers = (int *) calloc ((size_t)NUM_OF_ACCESSES, sizeof(int));
+
+    asm_struct.draw = (unsigned char *) calloc ((size_t) SIZE_OF_DRAW, sizeof(unsigned char));
+    asm_struct.my_in = (unsigned char *) calloc ((size_t) SIZE_OF_MY_IN, sizeof(unsigned char));
+    asm_struct.my_printf = (unsigned char *) calloc ((size_t) SIZE_OF_MY_PRINTF, sizeof(unsigned char));
 
     return asm_struct;
 }

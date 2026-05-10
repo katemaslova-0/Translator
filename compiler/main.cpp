@@ -55,6 +55,7 @@ int main (int argc, char * argv[])
     #endif
 
     Asm_t asm_struct = InitAsmStruct();
+    MakeStdFuncArrays(&asm_struct);
     CopyFuncsAndVarsToAsmStruct(&asm_struct, table);
 
     AddStandartFuncsAndVideomemory(&asm_struct); // добавление стандартных функций в asm_struct
@@ -79,6 +80,9 @@ int main (int argc, char * argv[])
     free(var_names.data.var);
     FreeNametable(table);
     free(func_names.data.func);
+    free(asm_struct.draw);
+    free(asm_struct.my_in);
+    free(asm_struct.my_printf);
 
     return 0;
 }

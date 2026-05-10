@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include "translate.h"
 
 // elf.h
@@ -30,60 +31,35 @@ unsigned char program_header_data[] = {0x01, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00,
                                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                        0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-unsigned char draw_array[] = {0x50, 0xb9, 0x0a, 0x00, 0x00, 0x00,
-0x51, 0xb8, 0x01, 0x00, 0x00, 0x00,
-0xbf, 0x01, 0x00, 0x00, 0x00, 0x48, 0x8d, 0x35, 0x00, 0x00, 0x00,
-0x00, 0x48, 0x6b, 0xc9, 0x0a,
-0x48, 0x83, 0xc6, 0x64, 0x48, 0x29, 0xce, 0xba, 0x0a, 0x00, 0x00,
-0x00, 0x0f, 0x05, 0xb8, 0x01, 0x00, 0x00, 0x00,
-0xbf, 0x01, 0x00, 0x00, 0x00, 0x6a, 0x0a, 0x48, 0x89, 0xe5, 0x48,
-0x8d, 0x75, 0x00, 0xba, 0x01, 0x00, 0x00, 0x00,
-0x0f, 0x05, 0x5d, 0x59, 0xe2, 0xbe, 0x58, 0xc3};
 
-unsigned char my_in_array[] = {0x55, 0x53, 0x6a, 0x00, 0x48, 0x89, 0xe5,
-0xb8, 0x00, 0x00, 0x00, 0x00,
-0x48, 0x89, 0xfe, 0xbf, 0x00, 0x00, 0x00, 0x00, 0xba, 0x08, 0x00, 0x00,
-0x00, 0x0f, 0x05, 0x48, 0x89, 0xc1, 0x48, 0xff, 0xc9, 0x48, 0x31, 0xc0,
-0x48, 0x0f, 0xb6, 0x1e, 0x48, 0x83, 0xfb, 0x2d, 0x75, 0x0a, 0xc6, 0x45,
-0x00, 0x01, 0x48, 0xff, 0xc6, 0x48, 0xff, 0xc9, 0x48, 0x0f, 0xb6, 0x1e,
-0x80, 0xeb, 0x30, 0x48, 0x6b, 0xc0, 0x0a, 0x48, 0x01, 0xd8, 0x48, 0xff,
-0xc6, 0xe2, 0xed, 0x48, 0x0f, 0xb6, 0x5d, 0x00, 0x48, 0x85, 0xdb, 0x74,
-0x03, 0x48, 0xf7, 0xd8, 0x48, 0x89, 0x06, 0x5b, 0x5b, 0x5d, 0xc3};
+void MakeStdFuncArrays (Asm_t * asm_struct)
+{
+    assert(asm_struct);
 
+    system("objcopy -O binary --only-section=.text asm_standart_func.o output.o");
 
-unsigned char my_printf_array[] = {0x55, 0x48, 0x89, 0xfa, 0x4d, 0x31, 0xf6, 0x6a,
-0x2d, 0x48, 0x89, 0xe5, 0x85, 0xd2, 0x78, 0x02, 0xeb, 0x1d, 0xf7, 0xda, 0x56, 0x51,
-0x52, 0x48, 0x8d, 0x75, 0x00, 0xb8, 0x01, 0x00, 0x00, 0x00, 0xbf, 0x01, 0x00, 0x00,
-0x00, 0xba, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x05, 0x5a, 0x59, 0x5e, 0xb9, 0x0a, 0x00,
-0x00, 0x00, 0x41, 0xbc, 0x0a, 0x00, 0x00, 0x00, 0xbe, 0x00, 0xca, 0x9a, 0x3b, 0x48,
-0x89, 0xd0, 0x48, 0x31, 0xd2, 0x48, 0xf7, 0xf6, 0x48, 0x83, 0xf8, 0x00, 0x74, 0x06,
-0x41, 0xbe, 0x01, 0x00, 0x00, 0x00, 0x49, 0x83, 0xfe, 0x00, 0x74, 0x22, 0x48, 0x83,
-0xc0, 0x30, 0x88, 0x45, 0x00, 0x56, 0x51, 0x52, 0x48, 0x8d, 0x75, 0x00, 0xb8, 0x01,
-0x00, 0x00, 0x00, 0xbf, 0x01, 0x00, 0x00, 0x00, 0xba, 0x01, 0x00, 0x00, 0x00, 0x0f,
-0x05, 0x5a, 0x59, 0x5e, 0x52, 0x48, 0x89, 0xf0, 0x48, 0x31, 0xd2, 0x49, 0xf7, 0xf4,
-0x48, 0x89, 0xc6, 0x5a, 0xe2, 0xb3, 0x49, 0x83, 0xfe, 0x00, 0x75, 0x23, 0xb8, 0x30,
-0x00, 0x00, 0x00, 0x88, 0x45, 0x00, 0x56, 0x51, 0x52, 0x48, 0x8d, 0x75, 0x00, 0xb8,
-0x01, 0x00, 0x00, 0x00, 0xbf, 0x01, 0x00, 0x00, 0x00, 0xba, 0x01, 0x00, 0x00, 0x00,
-0x0f, 0x05, 0x5a, 0x59, 0x5e, 0xb8, 0x20, 0x00, 0x00, 0x00, 0x88, 0x45, 0x00, 0x56,
-0x51, 0x52, 0x48, 0x8d, 0x75, 0x00, 0xb8, 0x01, 0x00, 0x00, 0x00, 0xbf, 0x01, 0x00,
-0x00, 0x00, 0xba, 0x01, 0x00, 0x00, 0x00, 0x0f, 0x05, 0x5a, 0x59, 0x5e, 0x5d, 0x5d,
-0xc3};
+    FILE * fp = fopen("output.o", "rb");
 
-//const int SIZE_OF_DRAW = 74;
-//const int SIZE_OF_MY_IN = 95;
-//const int SIZE_OF_MYPRINTF = 219;
-//
-//void MakeStdFuncArrays (void)
-//{
-//    system("objcopy -O binary --only-section=.text asm_standart_func.o output.o");
-//
-//    FILE * fp = fopen("output.o", "rb");
-//
-//    for (int count = 0; count < )
-//
-//
-//    fclose(fp);
-//}
+    struct stat st;
+    stat("output.o", &st);
+    int filesize = (int)st.st_size;
+
+    unsigned char * buffer = (unsigned char *) calloc ((size_t) filesize, sizeof(unsigned char));
+    assert(buffer);
+
+    fread(buffer, (size_t)filesize, sizeof(unsigned char), fp);
+
+    for (int count = 0; count < SIZE_OF_DRAW; count++)
+        asm_struct->draw[count] = buffer[count];
+
+    for (int count = 0; count < SIZE_OF_MY_IN; count++)
+        asm_struct->my_in[count] = buffer[count + SIZE_OF_DRAW];
+
+    for (int count = 0; count < SIZE_OF_MY_PRINTF; count++)
+        asm_struct->my_printf[count] = buffer[count + SIZE_OF_DRAW + SIZE_OF_MY_IN];
+
+    fclose(fp);
+}
 
 
 void AddDrawFuncBytes (Asm_t * asm_struct)
@@ -91,8 +67,7 @@ void AddDrawFuncBytes (Asm_t * asm_struct)
     assert(asm_struct);
 
     int byte_counter = asm_struct->byte_counter;
-    int size = sizeof(draw_array);
-    printf("Sizeof of Draw: %d\n", size);
+    int size = SIZE_OF_DRAW;
 
     for (int i = 0; i < asm_struct->name_counter; i++)
     {
@@ -101,7 +76,7 @@ void AddDrawFuncBytes (Asm_t * asm_struct)
     }
 
     for (int count = 0; count < size; count++)
-        asm_struct->bytes[byte_counter + count] = draw_array[count];
+        asm_struct->bytes[byte_counter + count] = asm_struct->draw[count];
 
     for (int i = 0; i < asm_struct->name_counter; i++)
     {
@@ -122,8 +97,7 @@ void AddMyInFuncBytes (Asm_t * asm_struct)
     assert(asm_struct);
 
     int byte_counter = asm_struct->byte_counter;
-    int size = sizeof(my_in_array);
-    printf("Sizeof of MyIn: %d\n", size);
+    int size = SIZE_OF_MY_IN;
 
     for (int i = 0; i < asm_struct->name_counter; i++)
     {
@@ -135,7 +109,7 @@ void AddMyInFuncBytes (Asm_t * asm_struct)
     }
 
     for (int count = 0; count < size; count++)
-        asm_struct->bytes[byte_counter + count] = my_in_array[count];
+        asm_struct->bytes[byte_counter + count] = asm_struct->my_in[count];
 
     asm_struct->byte_counter += size;
 }
@@ -146,8 +120,7 @@ void AddMyPrintfFuncBytes (Asm_t * asm_struct)
     assert(asm_struct);
 
     int byte_counter = asm_struct->byte_counter;
-    int size = sizeof(my_printf_array);
-    printf("Sizeof of MyPrintf: %d\n", size);
+    int size = SIZE_OF_MY_PRINTF;
 
     int i = 0;
     for (; i < asm_struct->name_counter; i++)
@@ -163,7 +136,7 @@ void AddMyPrintfFuncBytes (Asm_t * asm_struct)
         printf("ERROR! PRINTF NOR FOUND\n\n\n");
 
     for (int count = 0; count < size; count++)
-        asm_struct->bytes[byte_counter + count] = my_printf_array[count];
+        asm_struct->bytes[byte_counter + count] = asm_struct->my_printf[count];
 
     asm_struct->byte_counter += size;
 }
@@ -180,11 +153,11 @@ int TranslateMovRegToReg (Asm_t * asm_struct, Operand_t src, Operand_t dst)
     int count = asm_struct->byte_counter;
 
     asm_struct->bytes[count]     = 0x48; // for 64-bit operands
-    asm_struct->bytes[count + 1] = 0x89;
+    asm_struct->bytes[count + 1] = 0x89; // opcode: mov from reg to reg/mem
 
     unsigned char mod = 0;
     mod |= (1 << 7);
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod = '11' <-> both operands are in regs
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, SrcFirst);
 
@@ -202,11 +175,11 @@ int TranslateMovNumToReg (Asm_t * asm_struct, int value, Operand_t dst)
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0xC7;
+    asm_struct->bytes[count] = 0xC7; // opcode: mov num to reg/mem
 
     unsigned char mod = 0;
     mod |= (1 << 7);
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod = '11' <-> both operands are in regs
 
     Operand_t src = NUM_MOV;
 
@@ -232,11 +205,11 @@ int TranslateMovRegToMemRegWithDisp (Asm_t * asm_struct, int disp, Operand_t src
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x89;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x89; // opcode: mov from reg to reg/mem
 
     unsigned char mod = 0;
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod == '01' <-> 8 bit disp
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, SrcFirst);
 
@@ -257,10 +230,10 @@ int TranslateMovRegToMemLabel (Asm_t * asm_struct, Operand_t src, const char * n
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x89;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x89; // opcode: mov from reg to reg/mem
 
-    unsigned char mod = 0;
+    unsigned char mod = 0; // mod == '00' <-> no disp
 
     int res = 0;
     if ((res = AddNamePointer(asm_struct, name_ptr, asm_struct->byte_counter + 3)) != 0)
@@ -283,10 +256,10 @@ int TranslateMovRegToMemRegNoDisp (Asm_t * asm_struct, Operand_t src, Operand_t 
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x89;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x89; // opcode: mov from reg to reg/mem
 
-    unsigned char mod = 0;
+    unsigned char mod = 0; // mod == '00' <-> no disp
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, SrcFirst);
 
@@ -304,11 +277,11 @@ int TranslateMovMemRegWithDispToReg (Asm_t * asm_struct, int disp, Operand_t src
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x8B;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x8B; // opcode: mov from reg/mem to reg
 
     unsigned char mod = 0;
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod == '01' <-> 8 bit disp
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, DstFirst);
     asm_struct->bytes[count + 2] = mod_rm;
@@ -327,10 +300,10 @@ int TranslateMovMemRegNoDispToReg (Asm_t * asm_struct, Operand_t src, Operand_t 
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x8B;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x8B; // opcode: mov from reg/mem to reg
 
-    unsigned char mod = 0;
+    unsigned char mod = 0; // mod == '00' <-> no disp
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, DstFirst);
     asm_struct->bytes[count + 2] = mod_rm;
@@ -348,10 +321,10 @@ int TranslateMovMemLabelToReg (Asm_t * asm_struct, Operand_t dst, const char * n
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x8B;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x8B; // opcode: mov from reg/mem to reg
 
-    unsigned char mod = 0;
+    unsigned char mod = 0; // mod == '00' <-> no disp
 
     Operand_t src = LABEL;
 
@@ -393,10 +366,10 @@ int TranslateLeaFromMemRegNoDisp (Asm_t * asm_struct, Operand_t src, Operand_t d
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x8D;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x8D; // opcode: lea
 
-    unsigned char mod = 0;
+    unsigned char mod = 0; // mod == '00' <-> no disp
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, DstFirst);
     asm_struct->bytes[count + 2] = mod_rm;
@@ -413,11 +386,11 @@ int TranslateLeaFromMemRegWithDisp (Asm_t * asm_struct, int disp, Operand_t src,
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x8D;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x8D; // opcode: lea
 
     unsigned char mod = 0;
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod == '01' <-> 8 bit disp
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, DstFirst);
     asm_struct->bytes[count + 2] = mod_rm;
@@ -437,10 +410,10 @@ int TranslateLeaFromMemLabel (Asm_t * asm_struct, Operand_t dst, const char * na
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x8D;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x8D; // opcode: lea
 
-    unsigned char mod = 0;
+    unsigned char mod = 0; // mod == '00' <-> no disp
 
     Operand_t src = LABEL;
 
@@ -467,7 +440,7 @@ int TranslateCall (Asm_t * asm_struct, const char * name_ptr)
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0xE8;
+    asm_struct->bytes[count] = 0xE8; // opcode: call disp32
 
     int res = 0;
     if ((res = AddNamePointer(asm_struct, name_ptr, asm_struct->byte_counter + 1)) != 0)
@@ -485,7 +458,7 @@ int TranslatePush (Asm_t * asm_struct, Operand_t reg)
 {
     assert(asm_struct);
 
-    unsigned char byte = 0x50 + CalculateByteForPushPopInstr(reg);
+    unsigned char byte = 0x50 + CalculateByteForPushPopInstr(reg); // opcode: push reg
 
     asm_struct->bytes[asm_struct->byte_counter] = byte;
     asm_struct->byte_counter++;
@@ -526,7 +499,7 @@ int TranslatePop (Asm_t * asm_struct, Operand_t reg)
 {
     assert(asm_struct);
 
-    unsigned char byte = 0x58 + CalculateByteForPushPopInstr(reg);
+    unsigned char byte = 0x58 + CalculateByteForPushPopInstr(reg); // opcode: pop reg
 
     asm_struct->bytes[asm_struct->byte_counter] = byte;
     asm_struct->byte_counter++;
@@ -542,8 +515,8 @@ int TranslateXor (Asm_t * asm_struct, Operand_t src, Operand_t dst)
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count]     = 0x48;
-    asm_struct->bytes[count + 1] = 0x31;
+    asm_struct->bytes[count]     = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x31; // opcode: xor reg/mem, reg
 
     unsigned char mod = 0;
     mod |= (1 << 7);
@@ -566,7 +539,7 @@ int TranslateSyscall (Asm_t * asm_struct)
     int count = asm_struct->byte_counter;
 
     asm_struct->bytes[count]     = 0x0F;
-    asm_struct->bytes[count + 1] = 0x05;
+    asm_struct->bytes[count + 1] = 0x05; // 0x0F 0x05 --> syscall
 
     asm_struct->byte_counter += 2;
 
@@ -581,16 +554,16 @@ int TranslateAddOrSubTwoRegs (MathOp_t type, Asm_t * asm_struct, Operand_t src, 
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0x48;
+    asm_struct->bytes[count] = 0x48; // for 64-bit operands
 
     if (type == ADD)
-        asm_struct->bytes[count + 1] = 0x01;
+        asm_struct->bytes[count + 1] = 0x01; // opcode: add reg/mem, reg
     else
-        asm_struct->bytes[count + 1] = 0x29;
+        asm_struct->bytes[count + 1] = 0x29; // opcode: sub reg/mem, reg
 
     unsigned char mod = 0;
     mod |= (1 << 7);
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod = '11' <-> both operands are in regs
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, SrcFirst);
     asm_struct->bytes[count + 2] = mod_rm;
@@ -607,12 +580,12 @@ int TranslateAddOrSubRegAndNum (MathOp_t type, Asm_t * asm_struct, int value, Op
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0x48;
-    asm_struct->bytes[count + 1] = 0x81;
+    asm_struct->bytes[count] = 0x48;     // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x81; // == operation is coded inside mod_rm (as reg)
 
     unsigned char mod = 0;
     mod |= (1 << 7);
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod = '11' <-> both operands are in regs; <op> reg/mem, num
 
     Operand_t src = DEFAULT;
 
@@ -643,13 +616,13 @@ int TranslateMulOrDiv (MathOp_t type, Asm_t * asm_struct, Operand_t reg)
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0x48;
-    asm_struct->bytes[count + 1] = 0xF7;
+    asm_struct->bytes[count] = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0xF7; //== operation is coded inside mod_rm (as reg)
 
     unsigned char mod_rm = 0;
 
     if (type == MUL)
-        mod_rm = 0xE0;
+        mod_rm = 0xE0; // the operation
     else if (type == DIV)
         mod_rm = 0xF0;
     else
@@ -690,12 +663,12 @@ int TranslateXcng (Asm_t * asm_struct, Operand_t reg1, Operand_t reg2)
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0x48;
-    asm_struct->bytes[count + 1] = 0x87;
+    asm_struct->bytes[count] = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x87; // opcode: xchg reg/mem, reg
 
     unsigned char mod = 0;
     mod |= (1 << 7);
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod = '11' <-> both operands are in registers
 
     unsigned char mod_rm = MakeModeRm(mod, reg1, reg2, SrcFirst); // the last arg doesn't matter
     asm_struct->bytes[count + 2] = mod_rm;
@@ -713,12 +686,12 @@ int TranslateCmp (Asm_t * asm_struct, Operand_t src, Operand_t dst)
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0x48;
-    asm_struct->bytes[count + 1] = 0x39;
+    asm_struct->bytes[count] = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x39; // opcode: cmp reg/mem, reg
 
     unsigned char mod = 0;
     mod |= (1 << 7);
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod = '11' <-> both operands are in registers
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, SrcFirst);
     asm_struct->bytes[count + 2] = mod_rm;
@@ -740,14 +713,14 @@ int TranslateJmp (Asm_t * asm_struct, Jmp_t jump)
 
     if (jump == JMP)
     {
-        asm_struct->bytes[count] = 0xE9;
-        asm_struct->byte_counter ++;
+        asm_struct->bytes[count] = 0xE9; // opcode: jmp disp32
+        asm_struct->byte_counter++;
     }
     else
     {
-        asm_struct->bytes[count] = 0x0F;
+        asm_struct->bytes[count] = 0x0F; // escape prefix: opcode is next
 
-        switch(jump)
+        switch(jump) // jump opcode
         {
             case JL:  asm_struct->bytes[count + 1] = 0x8C; break;
             case JLE: asm_struct->bytes[count + 1] = 0x8E; break;
@@ -792,14 +765,14 @@ int TranslateCvtTypeSpecified (Cvt_t type, Asm_t * asm_struct, Operand_t src, Op
     assert(asm_struct);
 
     int count = asm_struct->byte_counter;
-    asm_struct->bytes[count] = 0xF2;
-    asm_struct->bytes[count + 1] = 0x48;
-    asm_struct->bytes[count + 2] = 0x0F;
+    asm_struct->bytes[count] = 0xF2; // rep prefix
+    asm_struct->bytes[count + 1] = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 2] = 0x0F; // escape prefix
 
     if (type == CVTSI2SD)
-        asm_struct->bytes[count + 3] = 0x2A;
+        asm_struct->bytes[count + 3] = 0x2A; // opcode
     else if (type == CVTSD2SI)
-        asm_struct->bytes[count + 3] = 0x2D;
+        asm_struct->bytes[count + 3] = 0x2D; // opcode
     else
     {
         printf("Error in TranslateCvtTypeSpecified\n");
@@ -808,7 +781,7 @@ int TranslateCvtTypeSpecified (Cvt_t type, Asm_t * asm_struct, Operand_t src, Op
 
     unsigned char mod = 0;
     mod |= (1 << 7);
-    mod |= (1 << 6);
+    mod |= (1 << 6); // mod = '11' <-> both operands are in registers
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, DstFirst);
     asm_struct->bytes[count + 4] = mod_rm;
@@ -826,8 +799,8 @@ int TranslateSqr (Asm_t * asm_struct) // for now only for sqrtsd xmm0, xmm0!
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0xF2;
-    asm_struct->bytes[count + 1] = 0x0F;
+    asm_struct->bytes[count] = 0xF2; // rep prefix
+    asm_struct->bytes[count + 1] = 0x0F; // escape prefix
     asm_struct->bytes[count + 2] = 0x51;
     asm_struct->bytes[count + 3] = 0xC0;
 
@@ -842,7 +815,7 @@ int TranslateRet (Asm_t * asm_struct)
 {
     assert(asm_struct);
 
-    asm_struct->bytes[asm_struct->byte_counter] = 0xC3;
+    asm_struct->bytes[asm_struct->byte_counter] = 0xC3; // opcode
     asm_struct->byte_counter++;
 
     return 0;
@@ -856,17 +829,17 @@ int TranslateImul (Asm_t * asm_struct, Operand_t src, Operand_t dst) // толь
 
     int count = asm_struct->byte_counter;
 
-    asm_struct->bytes[count] = 0x48;
-    asm_struct->bytes[count + 1] = 0x6B;
+    asm_struct->bytes[count] = 0x48; // for 64-bit operands
+    asm_struct->bytes[count + 1] = 0x6B; // opcode of imul
 
     unsigned char mod = 0;
     mod |= (1 << 6);
-    mod |= (1 << 7);
+    mod |= (1 << 7); // mod = '11' <-> both operands are in registers
 
     unsigned char mod_rm = MakeModeRm(mod, src, dst, DstFirst);
 
     asm_struct->bytes[count + 2] = mod_rm;
-    asm_struct->bytes[count + 3] = 0x0A;
+    asm_struct->bytes[count + 3] = 0x0A; // = 10d
 
     asm_struct->byte_counter += 4;
 
@@ -956,7 +929,7 @@ int AddNamePointer (Asm_t * asm_struct, const char * ptr, int var_offset)
     return -1;
 }
 
-// для вызова этой функции метка должна быть заранее внесена в массив меток - учесть при трансляции в бекенде
+
 int AddLabelPointer (Asm_t * asm_struct, int label_number, int label_offset)
 {
     assert(asm_struct);
